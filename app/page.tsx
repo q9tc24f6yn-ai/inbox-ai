@@ -2,11 +2,20 @@
 
 import { useState } from "react";
 
+type HistoryItem = {
+  message: string;
+  category?: string;
+  response?: string;
+};
+
 export default function Home() {
   const [message, setMessage] = useState("");
-  const [result, setResult] = useState(null);
+  const [result, setResult] = useState<any>(null);
   const [tone, setTone] = useState("pro");
-  const [history, setHistory] = useState([]);
+
+  // ✅ FIX PROPRE (plus de never / any problem)
+  const [history, setHistory] = useState<HistoryItem[]>([]);
+
   const [loading, setLoading] = useState(false);
 
   const handleAnalyze = async () => {
@@ -25,11 +34,19 @@ export default function Home() {
     const data = await res.json();
 
     setResult(data);
-    setHistory([{ message, ...data }, ...history]);
+
+    // ✅ SAFE UPDATE (évite bugs React + TS)
+    setHistory((prev) => [
+      { message, ...data },
+      ...prev
+    ]);
+
     setLoading(false);
   };
 
+  // ✅ SAFE COPY (plus d’erreur null)
   const copyToClipboard = () => {
+    if (!result?.response) return;
     navigator.clipboard.writeText(result.response);
   };
 
@@ -54,6 +71,7 @@ export default function Home() {
         boxShadow: "0 10px 30px rgba(0,0,0,0.1)"
       }}>
         <h1 style={{ marginBottom: 5 }}>Inbox AI</h1>
+
         <p style={{ color: "#666", marginBottom: 20 }}>
           Gagne du temps en répondant automatiquement à tes clients
         </p>
